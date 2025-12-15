@@ -813,14 +813,18 @@ you can enable document splitting on tag barcodes by setting
 to `true`.
 
 When enabled, documents will be split at pages containing tag barcodes, similar to how
-ASN barcodes work. The key differences from regular barcode splitting are:
+ASN barcodes work. Key features:
 
 - The page with the tag barcode is **retained** in the resulting document
-- Each split document will have the detected tags assigned to it
+- **Each split document extracts its own tags** - only tags on pages within that document are assigned
 - Multiple tag barcodes can trigger multiple splits in the same document
+- Works seamlessly with ASN barcodes - each split document gets its own ASN and tags
 
 This is useful for batch scanning where you place tag barcode pages between different
 documents to both separate and categorize them in a single operation.
+
+**Example:** A 6-page scan with TAG:invoice on page 3 and TAG:receipt on page 5 will create
+three documents: pages 1-2 (no tags), pages 3-4 (tagged "invoice"), and pages 5-6 (tagged "receipt").
 
 ## Automatic collation of double-sided documents {#collate}
 

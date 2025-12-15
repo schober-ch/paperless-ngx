@@ -944,6 +944,7 @@ class TestTagBarcode(DirectoriesMixin, SampleDirMixin, GetReaderPluginMixin, Tes
         THEN:
             - Separation pages are identified correctly
             - Pages with tag barcodes are marked for retention
+            - Tags are NOT assigned before splitting (let each split doc extract its own)
         """
         test_file = self.BARCODE_SAMPLE_DIR / "split-by-asn-1.pdf"
         with self.get_reader(test_file) as reader:
@@ -961,6 +962,11 @@ class TestTagBarcode(DirectoriesMixin, SampleDirMixin, GetReaderPluginMixin, Tes
                     8: True,
                 },
             )
+            
+            # Tags should NOT be assigned when tag splitting is enabled
+            # Each split document will extract its own tags during re-consumption
+            tags = reader.metadata.tag_ids
+            self.assertIsNone(tags)
 
     @override_settings(
         CONSUMER_ENABLE_TAG_BARCODE=True,
