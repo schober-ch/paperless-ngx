@@ -64,8 +64,12 @@ class Barcode:
     def is_tag(self) -> bool:
         """
         Returns True if the barcode value matches any configured tag mapping pattern,
-        False otherwise
+        False otherwise. Excludes ASN and separator barcodes.
         """
+        # Don't treat ASN or separator barcodes as tags
+        if self.is_asn or self.is_separator:
+            return False
+        
         for regex in self.settings.barcode_tag_mapping:
             if re.match(regex, self.value, flags=re.IGNORECASE):
                 return True

@@ -1012,3 +1012,28 @@ class TestTagBarcode(DirectoriesMixin, SampleDirMixin, GetReaderPluginMixin, Tes
             
             # ASN barcodes don't match TAG: pattern, so no splits
             self.assertDictEqual(separator_page_numbers, {})
+
+    @override_settings(
+        CONSUMER_ENABLE_ASN_BARCODE=True,
+        CONSUMER_ENABLE_TAG_BARCODE=True,
+        CONSUMER_TAG_BARCODE_MAPPING={"TAG:(.*)": "\\g<1>"},
+    )
+    def test_asn_barcodes_not_treated_as_tags(self):
+        """
+        GIVEN:
+            - PDF containing ASN barcodes
+            - TAG barcode feature is enabled with TAG: prefix
+        WHEN:
+            - File is processed
+        THEN:
+            - ASN barcodes should not be treated as tags
+            - No tags should be created
+        """
+        test_file = self.BARCODE_SAMPLE_DIR / "split-by-asn-1.pdf"
+        with self.get_reader(test_file) as reader:
+            reader.run()
+            tags = reader.metadata.tag_ids
+            
+            # ASN barcodes don't match TAG: pattern, so no tags
+            self.assertIsNone(tags)
+
