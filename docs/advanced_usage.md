@@ -805,6 +805,23 @@ See the relevant settings [`PAPERLESS_CONSUMER_ENABLE_TAG_BARCODE`](configuratio
 and [`PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING`](configuration.md#PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING)
 for more information.
 
+#### Splitting on Tag Barcodes
+
+By default, tag barcodes only assign tags to documents without splitting them. However,
+you can enable document splitting on tag barcodes by setting 
+[`PAPERLESS_CONSUMER_TAG_BARCODE_SPLIT`](configuration.md#PAPERLESS_CONSUMER_TAG_BARCODE_SPLIT) 
+to `true`.
+
+When enabled, documents will be split at pages containing tag barcodes, similar to how
+ASN barcodes work. The key differences from regular barcode splitting are:
+
+- The page with the tag barcode is **retained** in the resulting document
+- Each split document will have the detected tags assigned to it
+- Multiple tag barcodes can trigger multiple splits in the same document
+
+This is useful for batch scanning where you place tag barcode pages between different
+documents to both separate and categorize them in a single operation.
+
 ## Automatic collation of double-sided documents {#collate}
 
 !!! note
