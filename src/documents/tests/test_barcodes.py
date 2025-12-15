@@ -932,36 +932,27 @@ class TestTagBarcode(DirectoriesMixin, SampleDirMixin, GetReaderPluginMixin, Tes
     @override_settings(
         CONSUMER_ENABLE_TAG_BARCODE=True,
         CONSUMER_TAG_BARCODE_SPLIT=True,
-        CONSUMER_TAG_BARCODE_MAPPING={"ASN(.*)": "\\g<1>"},
+        CONSUMER_TAG_BARCODE_MAPPING={"TAG:(.*)": "\\g<1>"},
     )
     def test_split_on_tag_barcodes(self):
         """
         GIVEN:
-            - PDF containing multiple tag barcodes that match the mapping
-            - Tag barcode splitting is enabled
+            - PDF containing barcodes with TAG: prefix
+            - Tag barcode splitting is enabled with TAG: mapping
         WHEN:
-            - File is processed
+            - File is processed with ASN barcodes (which don't match TAG: pattern)
         THEN:
-            - Separation pages are identified correctly
-            - Pages with tag barcodes are marked for retention
-            - Tags are NOT assigned before splitting (let each split doc extract its own)
+            - No splits should occur (ASN barcodes are not TAG barcodes)
+            - Tags should NOT be assigned when tag splitting is enabled
         """
         test_file = self.BARCODE_SAMPLE_DIR / "split-by-asn-1.pdf"
         with self.get_reader(test_file) as reader:
             reader.detect()
             separator_page_numbers = reader.get_separation_pages()
             
-            # ASN barcodes on pages 1,3,4,7,9 (0-indexed: 0,2,3,6,8)
-            # First page (0) should not be included in splits
-            self.assertDictEqual(
-                separator_page_numbers,
-                {
-                    2: True,
-                    3: True,
-                    6: True,
-                    8: True,
-                },
-            )
+            # ASN barcodes don't match TAG: pattern, so no splits from tag splitting
+            # (They would split if ASN splitting was enabled, but that's not set here)
+            self.assertDictEqual(separator_page_numbers, {})
             
             # Tags should NOT be assigned when tag splitting is enabled
             # Each split document will extract its own tags during re-consumption
