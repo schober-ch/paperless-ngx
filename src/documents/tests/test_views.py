@@ -35,12 +35,12 @@ class TestViews(DirectoriesMixin, TestCase):
         self.user = User.objects.create_user("testuser")
         super().setUp()
 
-    def test_login_redirect(self):
+    def test_login_redirect(self) -> None:
         response = self.client.get("/")
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertEqual(response.url, "/accounts/login/?next=/")
 
-    def test_index(self):
+    def test_index(self) -> None:
         self.client.force_login(self.user)
         for language_given, language_actual in [
             ("", "en-US"),
@@ -63,10 +63,6 @@ class TestViews(DirectoriesMixin, TestCase):
             )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(
-                response.context_data["webmanifest"],
-                f"frontend/{language_actual}/manifest.webmanifest",
-            )
-            self.assertEqual(
                 response.context_data["styles_css"],
                 f"frontend/{language_actual}/styles.css",
             )
@@ -84,7 +80,7 @@ class TestViews(DirectoriesMixin, TestCase):
             )
 
     @override_settings(BASE_URL="/paperless/")
-    def test_index_app_logo_with_base_url(self):
+    def test_index_app_logo_with_base_url(self) -> None:
         """
         GIVEN:
             - Existing config with app_logo specified
@@ -103,7 +99,7 @@ class TestViews(DirectoriesMixin, TestCase):
             f"/paperless{config.app_logo}",
         )
 
-    def test_share_link_views(self):
+    def test_share_link_views(self) -> None:
         """
         GIVEN:
             - Share link created
@@ -169,7 +165,7 @@ class TestViews(DirectoriesMixin, TestCase):
         self.assertEqual(response.request["PATH_INFO"], "/accounts/login/")
         self.assertContains(response, b"Share link has expired")
 
-    def test_list_with_full_permissions(self):
+    def test_list_with_full_permissions(self) -> None:
         """
         GIVEN:
             - Tags with different permissions
@@ -238,7 +234,7 @@ class TestViews(DirectoriesMixin, TestCase):
             else:
                 assert False, f"Unexpected tag found: {tag['name']}"
 
-    def test_list_no_n_plus_1_queries(self):
+    def test_list_no_n_plus_1_queries(self) -> None:
         """
         GIVEN:
             - Tags with different permissions
@@ -281,7 +277,7 @@ class TestViews(DirectoriesMixin, TestCase):
 
 
 class TestAISuggestions(DirectoriesMixin, TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = User.objects.create_superuser(username="testuser")
         self.document = Document.objects.create(
             title="Test Document",
@@ -300,7 +296,11 @@ class TestAISuggestions(DirectoriesMixin, TestCase):
         AI_ENABLED=True,
         LLM_BACKEND="mock_backend",
     )
-    def test_suggestions_with_cached_llm(self, mock_refresh_cache, mock_get_cache):
+    def test_suggestions_with_cached_llm(
+        self,
+        mock_refresh_cache,
+        mock_get_cache,
+    ) -> None:
         mock_get_cache.return_value = MagicMock(suggestions={"tags": ["tag1", "tag2"]})
 
         self.client.force_login(user=self.user)
@@ -317,7 +317,7 @@ class TestAISuggestions(DirectoriesMixin, TestCase):
     def test_suggestions_with_ai_enabled(
         self,
         mock_get_ai_classification,
-    ):
+    ) -> None:
         mock_get_ai_classification.return_value = {
             "title": "AI Title",
             "tags": ["tag1", "tag2"],
@@ -346,7 +346,7 @@ class TestAISuggestions(DirectoriesMixin, TestCase):
             },
         )
 
-    def test_invalidate_suggestions_cache(self):
+    def test_invalidate_suggestions_cache(self) -> None:
         self.client.force_login(user=self.user)
         suggestions = {
             "title": "AI Title",
@@ -384,7 +384,7 @@ class TestAISuggestions(DirectoriesMixin, TestCase):
 class TestAIChatStreamingView(DirectoriesMixin, TestCase):
     ENDPOINT = "/api/documents/chat/"
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = User.objects.create_user(username="testuser", password="pass")
         self.client.force_login(user=self.user)
         self.document = Document.objects.create(
@@ -395,7 +395,7 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
         super().setUp()
 
     @override_settings(AI_ENABLED=False)
-    def test_post_ai_disabled(self):
+    def test_post_ai_disabled(self) -> None:
         response = self.client.post(
             self.ENDPOINT,
             data='{"q": "question"}',
@@ -407,7 +407,7 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
     @patch("documents.views.stream_chat_with_documents")
     @patch("documents.views.get_objects_for_user_owner_aware")
     @override_settings(AI_ENABLED=True)
-    def test_post_no_document_id(self, mock_get_objects, mock_stream_chat):
+    def test_post_no_document_id(self, mock_get_objects, mock_stream_chat) -> None:
         mock_get_objects.return_value = [self.document]
         mock_stream_chat.return_value = iter([b"data"])
         response = self.client.post(
@@ -420,7 +420,7 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
 
     @patch("documents.views.stream_chat_with_documents")
     @override_settings(AI_ENABLED=True)
-    def test_post_with_document_id(self, mock_stream_chat):
+    def test_post_with_document_id(self, mock_stream_chat) -> None:
         mock_stream_chat.return_value = iter([b"data"])
         response = self.client.post(
             self.ENDPOINT,
@@ -431,7 +431,7 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/event-stream")
 
     @override_settings(AI_ENABLED=True)
-    def test_post_with_invalid_document_id(self):
+    def test_post_with_invalid_document_id(self) -> None:
         response = self.client.post(
             self.ENDPOINT,
             data='{"q": "question", "document_id": 999999}',
@@ -442,7 +442,7 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
 
     @patch("documents.views.has_perms_owner_aware")
     @override_settings(AI_ENABLED=True)
-    def test_post_with_document_id_no_permission(self, mock_has_perms):
+    def test_post_with_document_id_no_permission(self, mock_has_perms) -> None:
         mock_has_perms.return_value = False
         response = self.client.post(
             self.ENDPOINT,
@@ -451,3 +451,98 @@ class TestAIChatStreamingView(DirectoriesMixin, TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertIn(b"Insufficient permissions", response.content)
+
+
+class TestManifestView(DirectoriesMixin, TestCase):
+    """
+    Tests for the dynamic PWA manifest view
+    """
+
+    def test_manifest_default_name(self):
+        """
+        GIVEN:
+            - No custom app title configured
+        WHEN:
+            - Manifest is requested
+        THEN:
+            - Manifest returns default name "Paperless-ngx"
+            - Manifest has all required PWA fields
+        """
+        response = self.client.get("/manifest.webmanifest")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "application/manifest+json")
+
+        manifest = json.loads(response.content)
+        self.assertEqual(manifest["name"], "Paperless-ngx")
+        self.assertEqual(manifest["short_name"], "Paperless-ngx")
+
+        self.assertEqual(manifest["display"], "standalone")
+        self.assertEqual(manifest["start_url"], "/")
+        self.assertIn("background_color", manifest)
+        self.assertIn("description", manifest)
+        self.assertIn("icons", manifest)
+        self.assertEqual(len(manifest["icons"]), 2)
+
+    @override_settings(APP_TITLE="My Custom Paperless")
+    def test_manifest_custom_name_from_settings(self):
+        """
+        GIVEN:
+            - Custom app title set via PAPERLESS_APP_TITLE environment variable
+        WHEN:
+            - Manifest is requested
+        THEN:
+            - Manifest returns custom app title
+        """
+        response = self.client.get("/manifest.webmanifest")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        manifest = json.loads(response.content)
+        self.assertEqual(manifest["name"], "My Custom Paperless")
+        self.assertEqual(manifest["short_name"], "My Custom Paperless")
+
+    def test_manifest_custom_name_from_config(self):
+        """
+        GIVEN:
+            - Custom app title set via ApplicationConfiguration
+        WHEN:
+            - Manifest is requested
+        THEN:
+            - Manifest returns custom app title from database config
+        """
+        config = ApplicationConfiguration.objects.first()
+        config.app_title = "Database Config Title"
+        config.save()
+
+        response = self.client.get("/manifest.webmanifest")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        manifest = json.loads(response.content)
+        self.assertEqual(manifest["name"], "Database Config Title")
+        self.assertEqual(manifest["short_name"], "Database Config Title")
+
+    @override_settings(APP_TITLE="Settings Title")
+    def test_manifest_config_priority(self):
+        """
+        GIVEN:
+            - Custom app title set in both settings and database config
+            - Database config has empty string
+        WHEN:
+            - Manifest is requested
+        THEN:
+            - Non-empty database config takes priority over settings
+            - Empty database config falls back to settings
+        """
+        config = ApplicationConfiguration.objects.first()
+        config.app_title = "Database Title Wins"
+        config.save()
+
+        response = self.client.get("/manifest.webmanifest")
+        manifest = json.loads(response.content)
+        self.assertEqual(manifest["name"], "Database Title Wins")
+
+        config.app_title = ""
+        config.save()
+
+        response = self.client.get("/manifest.webmanifest")
+        manifest = json.loads(response.content)
+        self.assertEqual(manifest["name"], "Settings Title")
